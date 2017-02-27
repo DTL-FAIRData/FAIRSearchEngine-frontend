@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="">
+    <meta name="author" content="">
+
+    <title>FAIR Search</title>
+
+    <!-- Bootstrap Core CSS -->
+    <link href="css/bootstrap.min.css" rel="stylesheet">
+
+    <!-- Custom CSS -->
+    <link href="css/stylish-portfolio.css" rel="stylesheet">
+    <link href="css/style.css" rel="stylesheet" type="text/css">
+    
+    <!-- Custom Fonts -->
+    <link href="font-awesome/css/font-awesome.min.css" rel="stylesheet" type="text/css">
+    <link href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:300,400,700,300italic,400italic,700italic" rel="stylesheet" type="text/css">
+
+    <!-- HTML5 Shim and Respond.js IE8 support of HTML5 elements and media queries -->
+    <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
+    <!--[if lt IE 9]>
+        <script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
+        <script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
+    <![endif]-->
+    
+    <!-- jQuery -->
+    <script src="js/jquery.js"></script>
+    
+    <script src="http://code.angularjs.org/1.2.16/angular.js"></script>
+    <script src="http://rawgit.com/YousefED/ElasticUI/master/examples/demo/lib/elasticsearch.angular.js"></script>
+    <script src="http://rawgit.com/YousefED/ElasticUI/master/examples/demo/lib/elastic.js"></script>
+    <script src="http://rawgit.com/YousefED/ElasticUI/master/dist/elasticui.min.js"></script>
+    <script src="http://twitter.github.io/typeahead.js/releases/latest/typeahead.bundle.js"></script>
+    
+    <script src="https://cdn.jsdelivr.net/lodash/4.17.4/lodash.min.js"></script>
+    <script src="js/angular-simple-logger.js"></script>
+    <script src="js/angular-google-maps.js"></script>
+    <script src='//maps.googleapis.com/maps/api/js?key=AIzaSyDpBDM3ZKEbSkq4vV2X3-MTmlJ5ABhZga0'></script>
+    
+    <script src="localAngular.js"></script>
+    
+    <script src="ahead.js"></script>
+    
+
+   <script>
+      var app =  angular
+            .module('fair', ['uiGmapgoogle-maps']).controller('mainCtrl', function($scope) {
+                $scope.map = { center: { latitude: 45, longitude: -73 }, zoom: 1,  bounds: {} };
+                $scope.marker = { coords: { latitude: 52.132, longitude: 5.291 }, id : 1 };
+              
+            });
+            
+//            .constant('euiHost', 'http://search-demo.fair-dtls.surf-hosted.nl:9200'); // ACTION: change to cluster address
+       
+    </script>
+</head>
+
+<body ng-app="fair" eui-index="'dataset'" ng-controller="mainCtrl">
+
+    <!-- Navigation -->
+    <a id="menu-toggle" href="#" class="btn btn-dark btn-lg toggle"><i class="fa fa-filter"></i></a>
+    <nav id="sidebar-wrapper">
+        <ul class="sidebar-nav" eui-aggregation="ejs.TermsAggregation('repositoryTitle.raw').field('repositoryTitle.raw').size(5)">
+            <a id="menu-close" href="#" class="btn btn-light btn-lg pull-right toggle"><i class="fa fa-times"></i></a>
+            <li class="sidebar-brand">
+                <a href="#top" onclick=$("#menu-close").click();>Filter</a>
+            </li>
+            <!--li>
+                <a href="#top" onclick=$("#menu-close").click();>Home</a>
+            </li>   
+            <li>
+                <a href="#about" onclick=$("#menu-close").click();>About</a>
+            </li-->
+            <!--ul _class="nav nav-list" eui-aggregation="ejs.TermsAggregation('repositoryTitle.raw').field('repositoryTitle.raw').size(5)"-->
+                <li ng-repeat="bucket in aggResult.buckets">
+                        <label aclass="checkbox" eui-filter="ejs.TermsFilter(field, bucket.key)" style="color:white !important">
+                         <input type="checkbox" ng-model="filter.enabled" > {{bucket.key | limitTo:10}} ({{bucket.doc_count}})
+                        </label>
+                </li>
+            <!--/ul-->
+            <eui-singleselect field="'repositoryTitle.raw'" size="5"></eui-singleselect>
+            
+            <eui-singleselect field="'catalogTitle.raw'" size="5"></eui-singleselect>
+        </ul>
+       
+    </nav>
+
+    <!-- Header -->
+    <!-- header id="top" class="header" -->
+       <header id="top" style="border: red 1px solid" >
+	    <div class="row" astyle="border: red 1px solid">
+            <div class="row">
+                <div class="col-md-1" style="border: red 1px solid">
+                    <h1><img src="img/imgpsh_fullsize.png" width="180"></h1>
+                    <h3>Search for FAIR data.</h3>
+                </div>
+                <div class="form-group col-md-6 col-md-offset-1" style="margin-top: 20px">
+                    <div class="row" style="border: 1px solid red">
+                        <input class="form-control input-lg typeahead" bs3-typeahead autocomplete="off" type="text" eui-query="ejs.MatchQuery('_all', querystring)" ng-model="querystring" eui-enabled="querystring.length" />
+                    </div>
+                    <div class="row">
+                          <div class="col-md-2">
+                            <eui-checklist field="'_source.repositoryTitle'" size="10"></eui-checklist>
+                          </div>
+                         <div class="col-md-2">
+                            <eui-singleselect field="'distribution.format'" size="5"></eui-singleselect>
+                         </div>
+                          <div class="col-md-2">
+                            <eui-singleselect field="'distribution.licenseAcronym'" size="5"></eui-singleselect>
+                         </div>
+                    </div>
+                    
+                    <!-- eui-searchbox field="'_all'"></eui-searchbox -->
+                    <!--input type="text" class="form-control" id="text" placeholder="Input your search terms"-->
+                </div>
+            </div>
+        </div>
+        </header>
+        
+        <div class="row" style="border: red 1px solid" ng-init="countr = 10"  >
+            <div class="form-group col-md-8 col-md-offset-2" style="min-height:300px">
+             
+                <ui-gmap-google-map center='map.center' zoom='map.zoom' bounds='map.bounds'>
+                    <ui-gmap-marker coords="marker.coords" options="marker.options" events="marker.events" idkey="marker.id"></ui-gmap-marker>
+                </ui-gmap-google-map>
+              
+            </div>
+	    </div>
+          <div class="row" style="border: red 1px solid" ng-init="countr = 10"  >
+            <div class="form-group col-md-4 col-md-offset-2" style="min-height:300px">
+                xx               
+            </div>
+            <div class="form-group col-md-4" style="min-height:300px">
+             xx              
+            </div>
+	    </div>
+    <!--/header-->
+
+
+
+    
+
+    <!-- Bootstrap Core JavaScript -->
+    <script src="js/bootstrap.min.js"></script>
+
+    <!-- Custom Theme JavaScript -->
+    <script>
+    // Closes the sidebar menu
+    $("#menu-close").click(function(e) {
+        e.preventDefault();
+        $("#sidebar-wrapper").toggleClass("active");
+    });
+    // Opens the sidebar menu
+    $("#menu-toggle").click(function(e) {
+        e.preventDefault();
+        $("#sidebar-wrapper").toggleClass("active");
+    });
+    // Scrolls to the selected menu item on the page
+    $(function() {
+        $('a[href*=#]:not([href=#],[data-toggle],[data-target],[data-slide])').click(function() {
+            if (location.pathname.replace(/^\//, '') == this.pathname.replace(/^\//, '') || location.hostname == this.hostname) {
+                var target = $(this.hash);
+                target = target.length ? target : $('[name=' + this.hash.slice(1) + ']');
+                if (target.length) {
+                    $('html,body').animate({
+                        scrollTop: target.offset().top
+                    }, 1000);
+                    return false;
+                }
+            }
+        });
+    });
+    //#to-top button appears after scrolling
+    var fixed = false;
+    $(document).scroll(function() {
+        if ($(this).scrollTop() > 250) {
+            if (!fixed) {
+                fixed = true;
+                // $('#to-top').css({position:'fixed', display:'block'});
+                $('#to-top').show("slow", function() {
+                    $('#to-top').css({
+                        position: 'fixed',
+                        display: 'block'
+                    });
+                });
+            }
+        } else {
+            if (fixed) {
+                fixed = false;
+                $('#to-top').hide("slow", function() {
+                    $('#to-top').css({
+                        display: 'none'
+                    });
+                });
+            }
+        }
+    });
+    // Disable Google Maps scrolling
+    // See http://stackoverflow.com/a/25904582/1607849
+    // Disable scroll zooming and bind back the click event
+    var onMapMouseleaveHandler = function(event) {
+        var that = $(this);
+        that.on('click', onMapClickHandler);
+        that.off('mouseleave', onMapMouseleaveHandler);
+        that.find('iframe').css("pointer-events", "none");
+    }
+    var onMapClickHandler = function(event) {
+            var that = $(this);
+            // Disable the click handler until the user leaves the map area
+            that.off('click', onMapClickHandler);
+            // Enable scrolling zoom
+            that.find('iframe').css("pointer-events", "auto");
+            // Handle the mouse leave event
+            that.on('mouseleave', onMapMouseleaveHandler);
+        }
+        // Enable map zooming with mouse scroll when the user clicks the map
+    $('.map').on('click', onMapClickHandler);
+    </script>
+    
+    <script>
+        //alert('scope'+$scope);
+    </script>
+    
+</body>
+
+</html>
