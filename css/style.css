@@ -1,0 +1,26 @@
+span {
+    color: white !important;
+}
+
+.top-buffer { margin-top:30px; }
+
+.sidebar-nav li label {
+    color: white !important;
+}
+
+.facet-remove{
+    color: white;
+}
+
+div {
+    color: red 1px solid !important;
+}
+
+
+
+.angular-google-map-container {
+    height: 400px !important;
+}
+.angular-google-map {
+    height: 400px !important;
+}
