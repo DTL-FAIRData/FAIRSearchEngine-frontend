@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="">
+    <meta name="author" content="">
+
+    <title>FAIR Search</title>
+
+    <!-- Bootstrap Core CSS -->
+    <link href="css/bootstrap.min.css" rel="stylesheet">
+
+    <!-- Custom CSS -->
+    <link href="css/stylish-portfolio.css" rel="stylesheet">
+    <link href="style.css" ref="stylesheet">
+    
+    <!-- Custom Fonts -->
+    <link href="font-awesome/css/font-awesome.min.css" rel="stylesheet" type="text/css">
+    <link href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:300,400,700,300italic,400italic,700italic" rel="stylesheet" type="text/css">
+
+    <!-- HTML5 Shim and Respond.js IE8 support of HTML5 elements and media queries -->
+    <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
+    <!--[if lt IE 9]>
+        <script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
+        <script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
+    <![endif]-->
+    
+    <!-- jQuery -->
+    <script src="js/jquery.js"></script>
+    <!-- script src="https://code.jquery.com/jquery-1.12.4.js" integrity="sha256-Qw82+bXyGq6MydymqBxNPYTaUXXq7c8v3CwiYwLLNXU=" crossorigin="anonymous"></script-->
+    <!--script src="https://code.jquery.com/jquery-2.2.4.js" integrity="sha256-iT6Q9iMJYuQiMWNd9lDyBUStIq/8PuOW33aOqmvFpqI=" crossorigin="anonymous"></script-->
+    
+    <script src="http://code.angularjs.org/1.2.16/angular.js"></script>
+    <script src="http://rawgit.com/YousefED/ElasticUI/master/examples/demo/lib/elasticsearch.angular.js"></script>
+    <script src="http://rawgit.com/YousefED/ElasticUI/master/examples/demo/lib/elastic.js"></script>
+    <script src="http://rawgit.com/YousefED/ElasticUI/master/dist/elasticui.min.js"></script>
+    <script src="http://twitter.github.io/typeahead.js/releases/latest/typeahead.bundle.js"></script>
+    <script src="localAngular.js"   ></script>
+    
+    <!-- only needed to instantiate client, if using angular remove -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/elasticsearch/12.1.3/elasticsearch.js"></script>
+    
+    <script src="ahead.js"></script>
+    
+    
+    
+
+   <script>
+      var app =  angular
+            .module('fair', ['elasticui', 'bootstrap3-typeahead'])
+            .constant('euiHost', 'http://127.0.0.1:9200') // ACTION: change to cluster address
+            .controller('searchController', ['$scope', function ($scope) {
+                    $scope.currentSearch = null;
+                    
+                    $scope.updateSearch = function(doc){
+                        $scope.currentSearch = doc;
+                    }
+                    
+                    $scope.resetSearch = function(){
+                        $scope.currentSearch = null;
+                    }
+                
+                    $scope.updateCurrentSearch = function (newCurrentSearchObj) {
+                        $scope.currentSearch = newCurrentSearchObj;
+                    }
+                    
+                    $scope.items = Array(3);
+                    $scope.items[0] = "aaa";
+                    $scope.items[1] = "bbb";
+                    $scope.items[2] = "ccc";
+                    $scope.items[3] = "ddd";
+                    
+                    $scope.displayText = function(item) {
+                        return item.sagsNo
+                    }
+                    $scope.afterSelect = function(item) {
+                      $scope.someId = item.id
+                    }
+                    
+                    
+            }]);
+//            .constant('euiHost', 'http://search-demo.fair-dtls.surf-hosted.nl:9200'); // ACTION: change to cluster address
+       
+       //type ahead jquery (move to angular)
+       //jQuery(".mainsearch").tagsinput({
+    ///      typeahead: {
+       //     source: ["Amsterdam", "Washington", "Sydney", "Beijing", "Cairo"]
+         // }
+        //});
+       
+      // var $input = $(".mainsearch");
+       
+       var numbers = new Bloodhound({
+          datumTokenizer: Bloodhound.tokenizers.whitespace,
+          queryTokenizer: Bloodhound.tokenizers.whitespace,
+          local:  ["(A)labama","Alaska","Arizona","Arkansas","Arkansas2","Barkansas"]
+       });
+
+        // initialize the bloodhound suggestion engine
+       numbers.initialize();
+       
+       $(function() {
+           
+           var states = ['dataset', 'bank', 'galliera', 'genetic', 'monarch',
+          'info', 'allele', 'clinical', 'british', 'database', 'disease',
+          'fantom5', 'genotype', 'homozygous', 'human'
+            ];
+           
+            var substringMatcher = function(strs) {
+              return function findMatches(q, cb) {
+                var matches, substringRegex;
+
+                // an array that will be populated with substring matches
+                matches = [];
+
+                // regex used to determine if a string contains the substring `q`
+                substrRegex = new RegExp(q, 'i');
+
+                // iterate through the pool of strings and for any string that
+                // contains the substring `q`, add it to the `matches` array
+                $.each(strs, function(i, str) {
+                  if (substrRegex.test(str)) {
+                    matches.push(str);
+                  }
+                });
+
+                cb(matches);
+              };
+            };
+           
+           
+           var bestPictures = new Bloodhound({
+              datumTokenizer: Bloodhound.tokenizers.obj.whitespace('value'),
+              queryTokenizer: Bloodhound.tokenizers.whitespace,
+              //prefetch: '../data/films/post_1960.json',
+              remote: {
+                url: '../data/films/queries/%QUERY.json',
+                wildcard: '%QUERY'
+              }
+            });
+
+           $('#mainsearc').typeahead({
+                  hint: true,
+                  highlight: true,
+                  minLength: 1
+                },
+                {
+                  name: 'states',
+                  source: substringMatcher(states)
+                  //source: bestPictures
+           });
+        });
+       
+       
+
+       //console.log( ejs.MatchQuery('_all', 'test').toJSON() );
+       //ejs.CompletionSuggester('test').toJSON() 
+        //var client = new elasticsearch.Client({
+        //  host: 'localhost:9200',
+        //  log: 'trace'
+        //});
+       
+       
+        client = new elasticsearch.Client({
+          host: 'localhost:9200',
+          log: 'trace'
+         } 
+        );
+       
+       
+    
+        client.search({
+          index: 'myindex',
+          body:  ejs.CompletionSuggester('test')
+            //ejs.Request()
+            //      .query(ejs.MatchQuery('title', 'test'))
+            //      .facet(ejs.TermsFacet('tags').field('tags'))
+        }, function (error, response) {
+           //console.log(error);
+           //console.log(response);
+        });
+       
+       //console.log( ejs.CompletionSuggester('test').toJSON() );
+       
+    </script>
+</head>
+
+<body ng-app="fair" eui-index="'dataset'" ng-controller='searchController'>
+
+    <!-- Navigation -->
+    <a id="menu-toggle" href="#" class="btn btn-dark btn-lg toggle"><i class="fa fa-filter"></i></a>
+    <nav id="sidebar-wrapper">
+        <ul class="sidebar-nav" eui-aggregation="ejs.TermsAggregation('repositoryTitle.raw').field('repositoryTitle.raw').size(5)">
+            <a id="menu-close" href="#" class="btn btn-light btn-lg pull-right toggle"><i class="fa fa-times"></i></a>
+            <li class="sidebar-brand">
+                <a href="#top" onclick=$("#menu-close").click();>Filter</a>
+            </li>
+            <!--li>
+                <a href="#top" onclick=$("#menu-close").click();>Home</a>
+            </li>   
+            <li>
+                <a href="#about" onclick=$("#menu-close").click();>About</a>
+            </li-->
+            <!--ul _class="nav nav-list" eui-aggregation="ejs.TermsAggregation('repositoryTitle.raw').field('repositoryTitle.raw').size(5)"-->
+                <li ng-repeat="bucket in aggResult.buckets">
+                        <label aclass="checkbox" eui-filter="ejs.TermsFilter(field, bucket.key)" style="color:white !important">
+                         <input type="checkbox" ng-model="filter.enabled" > {{bucket.key | limitTo:10}} ({{bucket.doc_count}})
+                        </label>
+                </li>
+            <!--/ul-->
+            <eui-singleselect field="'repositoryTitle.raw'" size="5"></eui-singleselect>
+            
+            <eui-singleselect field="'catalogTitle.raw'" size="5"></eui-singleselect>
+        </ul>
+       
+    </nav>
+
+    <!-- Header -->
+    <!-- header id="top" class="header" -->
+       <header id="top" style="border: red 0px solid" class='header'>
+	    <div class="row" astyle="border: red 0px solid">
+            <div class="row" style="border: red 0px solid">
+                <div class="col-md-2" style="border: black 0px solid; margin-left: 10px;">
+                    <h1><img src="img/imgpsh_fullsize.png" width="180"></h1>
+                    <!--h3>&nbsp;Search for FAIR data.</h3-->
+                </div>
+                <div class="form-group col-md-6" style="border: black 0px solid">
+                    <div class="row" style="border: 0px solid red; padding-top: 15px">
+                        <input class="form-control input-lg a_typeahead" a_bs3-typeahead autocomplete="off" type="text" eui-query="ejs.MatchQuery('_all', querystring)" ng-model="querystring" eui-enabled="querystring.length" id="mainsearc" />
+                    </div>
+                    <div class="row">
+                          <div class="col-md-2">
+                            <eui-checklist field="'_source.repositoryTitle'" size="10"></eui-checklist>
+                          </div>
+                         <div class="col-md-2">
+                            <eui-singleselect field="'distribution.format'" size="5"></eui-singleselect>
+                         </div>
+                          <div class="col-md-2">
+                            <eui-singleselect field="'distribution.licenseAcronym'" size="5"></eui-singleselect>
+                         </div>
+                    </div>
+                    
+                    <!-- eui-searchbox field="'_all'"></eui-searchbox -->
+                    <!--input type="text" class="form-control" id="text" placeholder="Input your search terms"-->
+                </div>
+            </div>
+        </div>
+        </header>
+        
+        <div class="row" style="border: red 0px solid" ng-init="countr = 10"  >
+            <div class="form-group col-md-6 col-md-offset-2">
+                    <div class="list-group">
+                        <div ng-repeat="doc in indexVM.results.hits.hits" class="list-group-item" ng-mouseover="updateSearch(doc)" ng-mouseout="resetSearch()">
+                            <!--{{doc._source | json | limitTo: 500}} OPTIONAL: display more meaningful data instead of json -->
+                            <h4 class="list-group-item-heading" ng-mouseover="countr = countr+1"><a href="{{doc._source.landingPage}}">{{doc._source.title}}</a></h4>
+                            <p class="list-group-item-text">{{doc._source.description | limitTo:400}}</p>
+                            <div class="small top-buffer" style="margin-top: 10px;">
+                                <div class="btn-toolbar" role="toolbar">
+                                    <a  ng-repeat="distribution in doc._source.distribution" class="btn btn-primary btn-xs" href="{{distribution.accessURL}}{{distribution.download}}">{{distribution.title}}  ({{distribution.downloadHumanReadableSize}} / <span class="label label-default">{{distribution.licenseAcronym}}</span>)</a>
+                                </div>
+                            </div>
+
+                            <ol class="breadcrumb top-buffer" style="margin-top: 10px;">
+                                <li><a href="{{doc._source.FDPurl}}">{{doc._source.repositoryTitle}}</a></li>
+                                <li><a href="{{doc._source.catalogURL}}">{{doc._source.catalogTitle}}</a></li>
+                                <li>Distribution <!--a href="" class="btn btn-primary btn-xs" href="{{distribution.accessURL}}{{distribution.download}}">xxx</a-->
+                                  <div class="btn-group">
+                                  <button type="button" class="btn btn-default btn-xs dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                    <span class="caret"></span>
+                                  </button>
+                                      <ul class="dropdown-menu">
+                                        <!--li ng-repeat="distribution in doc._source.distribution"><a href="{{distribution.distributionURL}}">{{distribution.distributionURL}}</a></li-->
+                                        <li ng-repeat="distribution in doc._source.distribution"><a href="{{distribution.distributionURL}}">{{distribution.title}}</a></li>
+                                      </ul>
+                                   </div>
+                                </li>
+                            </ol>
+                                <!--span>              
+                                  <ul ng-repeat="distribution in doc._source.distribution">
+                                      <li><a href="{{distribution.distributionURL}}">{{distribution.distributionURL}}</a></li>
+                                  </ul>
+                                </span-->
+                        </div>
+                    </div>
+                    <eui-simple-paging></eui-simple-paging>
+            </div>
+            <div class="col-md-2" ng-mouseover="countr = countr+1" style="border: 0px solid red;" ng-show="currentSearch!=null">
+            <img src="https://api.thumbalizr.com/?url={{currentSearch._source.landingPage}}&width=250">
+            <br/>
+            <h3>{{currentSearch._source.catalogTitle}}</h3>
+                <div ng-repeat="taxonomyURI in currentSearch._source.taxonomyList">{{taxonomyURI}}</div>
+            </div> 
+	    </div>
+    <!--/header-->
+
+
+
+    
+
+    <!-- Bootstrap Core JavaScript -->
+    <script src="js/bootstrap.min.js"></script>
+
+    <!-- Custom Theme JavaScript -->
+    <script>
+    // Closes the sidebar menu
+    $("#menu-close").click(function(e) {
+        e.preventDefault();
+        $("#sidebar-wrapper").toggleClass("active");
+    });
+    // Opens the sidebar menu
+    $("#menu-toggle").click(function(e) {
+        e.preventDefault();
+        $("#sidebar-wrapper").toggleClass("active");
+    });
+    // Scrolls to the selected menu item on the page
+    $(function() {
+        $('a[href*=#]:not([href=#],[data-toggle],[data-target],[data-slide])').click(function() {
+            if (location.pathname.replace(/^\//, '') == this.pathname.replace(/^\//, '') || location.hostname == this.hostname) {
+                var target = $(this.hash);
+                target = target.length ? target : $('[name=' + this.hash.slice(1) + ']');
+                if (target.length) {
+                    $('html,body').animate({
+                        scrollTop: target.offset().top
+                    }, 1000);
+                    return false;
+                }
+            }
+        });
+    });
+    //#to-top button appears after scrolling
+    var fixed = false;
+    $(document).scroll(function() {
+        if ($(this).scrollTop() > 250) {
+            if (!fixed) {
+                fixed = true;
+                // $('#to-top').css({position:'fixed', display:'block'});
+                $('#to-top').show("slow", function() {
+                    $('#to-top').css({
+                        position: 'fixed',
+                        display: 'block'
+                    });
+                });
+            }
+        } else {
+            if (fixed) {
+                fixed = false;
+                $('#to-top').hide("slow", function() {
+                    $('#to-top').css({
+                        display: 'none'
+                    });
+                });
+            }
+        }
+    });
+    // Disable Google Maps scrolling
+    // See http://stackoverflow.com/a/25904582/1607849
+    // Disable scroll zooming and bind back the click event
+    var onMapMouseleaveHandler = function(event) {
+        var that = $(this);
+        that.on('click', onMapClickHandler);
+        that.off('mouseleave', onMapMouseleaveHandler);
+        that.find('iframe').css("pointer-events", "none");
+    }
+    var onMapClickHandler = function(event) {
+            var that = $(this);
+            // Disable the click handler until the user leaves the map area
+            that.off('click', onMapClickHandler);
+            // Enable scrolling zoom
+            that.find('iframe').css("pointer-events", "auto");
+            // Handle the mouse leave event
+            that.on('mouseleave', onMapMouseleaveHandler);
+        }
+        // Enable map zooming with mouse scroll when the user clicks the map
+    $('.map').on('click', onMapClickHandler);
+    </script>
+    
+    <script>
+        //alert('scope'+$scope);
+    </script>
+    
+</body>
+
+</html>
