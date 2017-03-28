@@ -8,6 +8,9 @@ FROM ubuntu
 
 MAINTAINER fair
 
+#set some env variables
+RUN sysctl -w vm.max_map_count=262144
+RUN echo "vm.max_map_count=262144" >> /etc/sysctl.conf
 
 # Update the default application repository sources list and install default packages
 RUN apt-get update
@@ -32,6 +35,8 @@ RUN cat /root/GPG-KEY-elasticsearch | apt-key add -
 RUN echo "deb http://packages.elastic.co/elasticsearch/2.x/debian stable main" |  tee -a /etc/apt/sources.list.d/elasticsearch-2.x.list
 RUN apt-get update
 RUN apt-get install elasticsearch
+
+RUN echo "network.host: 0.0.0.0" > /etc/elasticsearch/elasticsearch.yml
 
 RUN rm -f /var/www/html/index.html
 
