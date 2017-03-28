@@ -1,3 +1,4 @@
+{ "create": { "_index": "dataset", "_type": "dataset"}}
 {  
    "repositoryLocation":[  
       52.13263,
