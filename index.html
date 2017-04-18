@@ -11,12 +11,34 @@
 
     <title>FAIR Search</title>
 
+    <style>
+    
+        /* move to style.css*/
+    
+        .tt-suggestion, .tt-selectable {
+            font-size: 18px !important;   
+            padding-left: 20px;
+            padding-right: 20px;
+            background-color: #fefefe;
+        }
+
+        .tt-menu{
+            border: 1px solid #efefef;  
+        }
+        
+        span.twitter-typeahead {
+            width: 100% !important;
+        }
+        
+    </style>
+    
     <!-- Bootstrap Core CSS -->
     <link href="css/bootstrap.min.css" rel="stylesheet">
 
     <!-- Custom CSS -->
-    <link href="css/stylish-portfolio.css" rel="stylesheet">
     <link href="style.css" ref="stylesheet">
+    <link href="css/stylish-portfolio.css" rel="stylesheet">
+
     
     <!-- Custom Fonts -->
     <link href="font-awesome/css/font-awesome.min.css" rel="stylesheet" type="text/css">
@@ -39,7 +61,7 @@
     <script src="http://rawgit.com/YousefED/ElasticUI/master/examples/demo/lib/elastic.js"></script>
     <script src="http://rawgit.com/YousefED/ElasticUI/master/dist/elasticui.min.js"></script>
     <script src="http://twitter.github.io/typeahead.js/releases/latest/typeahead.bundle.js"></script>
-    <script src="localAngular.js"   ></script>
+    <script src="localAngular.js"></script>
     
     <!-- only needed to instantiate client, if using angular remove -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/elasticsearch/12.1.3/elasticsearch.js"></script>
@@ -53,7 +75,11 @@
       var app =  angular
             .module('fair', ['elasticui', 'bootstrap3-typeahead'])
             .constant('euiHost', 'http://127.0.0.1:9200') // ACTION: change to cluster address
-            .controller('searchController', ['$scope', function ($scope) {
+            .controller('searchController', ['$scope', function ($scope, $euIndex) {
+                
+                    $scope.querystring = "";
+                    $scope.showResults = false;
+                
                     $scope.currentSearch = null;
                     
                     $scope.updateSearch = function(doc){
@@ -80,7 +106,24 @@
                     $scope.afterSelect = function(item) {
                       $scope.someId = item.id
                     }
+
                     
+                     $scope.resultsView = function(){
+                          alert('a');
+                          console.log($scope.indexVM);                          
+                     }
+                     
+                     $scope.resultsView2 = function(){
+                         $scope.showResults = true;
+                         //alert($scope.querystring);
+                         console.log("aa");
+                         console.log($scope);
+                         console.log("bb");
+                         console.log($scope.indexVM);
+                     }
+                    
+                    console.log($scope);
+
                     
             }]);
 //            .constant('euiHost', 'http://search-demo.fair-dtls.surf-hosted.nl:9200'); // ACTION: change to cluster address
@@ -88,7 +131,7 @@
        //type ahead jquery (move to angular)
        //jQuery(".mainsearch").tagsinput({
     ///      typeahead: {
-       //     source: ["Amsterdam", "Washington", "Sydney", "Beijing", "Cairo"]
+       //     source: ["Amsterdam", "Washington", "Sydney", "Beijing", V"Cairo"]
          // }
         //});
        
@@ -222,15 +265,29 @@
     <!-- Header -->
     <!-- header id="top" class="header" -->
        <header id="top" style="border: red 0px solid" class='header'>
+         <div class="row" astyle="border: red 0px solid" id="hheader" ng-hide="showResults">
+            <div class="row" style="border: red 0px solid">
+                <div class="col-md-2" style="border: black 0px solid; margin-left: 10px;">                 
+                    <!--h3>&nbsp;Search for FAIR data.</h3-->
+                </div>
+                <div class="form-group col-md-6" style="border: black 0px solid">
+                    <div class="row textcenter" style="border: 0px solid red; padding-top: 20%">
+                           <h1><img src="img/imgpsh_fullsize.png" width="180" style="margin:0 auto;"/></h1>                    
+                    </div>
+                    <!-- eui-searchbox field="'_all'"></eui-searchbox -->
+                    <!--input type="text" class="form-control" id="text" placeholder="Input your search terms"-->
+                </div>
+            </div>
+        </div>
 	    <div class="row" astyle="border: red 0px solid">
             <div class="row" style="border: red 0px solid">
                 <div class="col-md-2" style="border: black 0px solid; margin-left: 10px;">
-                    <h1><img src="img/imgpsh_fullsize.png" width="180"></h1>
+                    <h1><img src="img/imgpsh_fullsize.png" width="180" ng-show="showResults"></h1>
                     <!--h3>&nbsp;Search for FAIR data.</h3-->
                 </div>
                 <div class="form-group col-md-6" style="border: black 0px solid">
                     <div class="row" style="border: 0px solid red; padding-top: 15px">
-                        <input class="form-control input-lg a_typeahead" a_bs3-typeahead autocomplete="off" type="text" eui-query="ejs.MatchQuery('_all', querystring)" ng-model="querystring" eui-enabled="querystring.length" id="mainsearc" />
+                        <input class="form-control input-lg a_typeahead" a_bs3-typeahead autocomplete="off" type="text" eui-query="ejs.MatchQuery('_all', querystring)" ng-model="querystring" eui-enabled="querystring.length" id="mainsearc"  ng-change="resultsView2()" /> {{querystring}}
                     </div>
                     <div class="row">
                           <div class="col-md-2">
@@ -251,7 +308,7 @@
         </div>
         </header>
         
-        <div class="row" style="border: red 0px solid" ng-init="countr = 10"  >
+        <div class="row" style="border: red 0px solid" ng-init="countr = 10"  ng-show="showResults">
             <div class="form-group col-md-6 col-md-offset-2">
                     <div class="list-group">
                         <div ng-repeat="doc in indexVM.results.hits.hits" class="list-group-item" ng-mouseover="updateSearch(doc)" ng-mouseout="resetSearch()">
