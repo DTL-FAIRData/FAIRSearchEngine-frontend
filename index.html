@@ -56,11 +56,11 @@
     <!-- script src="https://code.jquery.com/jquery-1.12.4.js" integrity="sha256-Qw82+bXyGq6MydymqBxNPYTaUXXq7c8v3CwiYwLLNXU=" crossorigin="anonymous"></script-->
     <!--script src="https://code.jquery.com/jquery-2.2.4.js" integrity="sha256-iT6Q9iMJYuQiMWNd9lDyBUStIq/8PuOW33aOqmvFpqI=" crossorigin="anonymous"></script-->
     
-    <script src="http://code.angularjs.org/1.2.16/angular.js"></script>
-    <script src="http://rawgit.com/YousefED/ElasticUI/master/examples/demo/lib/elasticsearch.angular.js"></script>
-    <script src="http://rawgit.com/YousefED/ElasticUI/master/examples/demo/lib/elastic.js"></script>
-    <script src="http://rawgit.com/YousefED/ElasticUI/master/dist/elasticui.min.js"></script>
-    <script src="http://twitter.github.io/typeahead.js/releases/latest/typeahead.bundle.js"></script>
+    <script src="https://code.angularjs.org/1.2.16/angular.js"></script>
+    <script src="https://rawgit.com/YousefED/ElasticUI/master/examples/demo/lib/elasticsearch.angular.js"></script>
+    <script src="https://rawgit.com/YousefED/ElasticUI/master/examples/demo/lib/elastic.js"></script>
+    <script src="https://rawgit.com/YousefED/ElasticUI/master/dist/elasticui.min.js"></script>
+    <script src="https://twitter.github.io/typeahead.js/releases/latest/typeahead.bundle.js"></script>
     <script src="localAngular.js"></script>
     
     <!-- only needed to instantiate client, if using angular remove -->
@@ -109,7 +109,7 @@
 
                     
                      $scope.resultsView = function(){
-                          alert('a');
+                          //alert('a');
                           console.log($scope.indexVM);                          
                      }
                      
@@ -157,6 +157,8 @@
               return function findMatches(q, cb) {
                 var matches, substringRegex;
 
+                  
+                  
                 // an array that will be populated with substring matches
                 matches = [];
 
@@ -172,8 +174,53 @@
                 });
 
                 cb(matches);
-              };
-            };
+              }};
+           
+           
+              var substringMatcher2 = function(strs) {
+                  return function findMatches(q, cb, acb) {                 
+                     
+                      //alert(cb);
+                      //alert(acb);
+                      
+                      
+                     //res = client.suggest({
+                     //    index: 'dataset',
+                     //    body: ejs.CompletionSuggester('name_suggest')
+                     //              .text(q)
+                     //              .field('suggest')
+                     //   }, function (error, response, cb) {
+                     //       console.log(error);
+                     //       console.log("about to display");
+                     //      console.log(response);
+                     //           for(i = 0; i < response.name_suggest.length; i++){
+                     //             // alert(response.name_suggest[0].options[i].text);
+                     //               console.log("fff"+response.name_suggest[0].options[i].text);
+                     //               matches[i] = response.name_suggest[0].options[i].text;
+                     //               cb(matches);
+                     //          }
+                     //    }); 
+                      
+                      //elasticsearch.Client.apis.mine = { giveSuggestion:cb };
+                      
+                      res = client.suggest({
+                        index: 'dataset',
+                        body: ejs.CompletionSuggester('name_suggest')
+                                  .text(q)
+                                  .field('suggest')
+                        }).then( function (body) {
+                           //alert(JSON.stringify(body));
+                           var matches = Array();
+                          
+                           for(i = 0; i < body.name_suggest[0].options.length; i++){
+                               console.log(body.name_suggest[0].options.length + " " +body.name_suggest[0].options[i].text);
+                               matches[i] = body.name_suggest[0].options[i].text;
+                           }
+                          console.log("end to display");                         
+                          acb(matches);
+                        } );
+              }};     
+
            
            
            var bestPictures = new Bloodhound({
@@ -193,7 +240,8 @@
                 },
                 {
                   name: 'states',
-                  source: substringMatcher(states)
+                  //source: substringMatcher2(states),
+                  source: substringMatcher2()
                   //source: bestPictures
            });
         });
@@ -210,11 +258,22 @@
        
         client = new elasticsearch.Client({
           host: 'localhost:9200',
-          log: 'trace'
+          log: 'trace',
+          //apiVersion: 'mine'
          } 
         );
        
        
+       
+       client.suggest({
+          index: 'dataset',
+          body: ejs.CompletionSuggester('name_suggest')
+                  .text('x')
+                  .field('suggest')
+        }, function (error, response) {
+          // console.log(error);
+           //console.log(response);
+        });
     
         client.search({
           index: 'myindex',
