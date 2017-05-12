@@ -1,17 +1,15 @@
-//correct mapping
-put dataset
  {
       "mappings": {
          "dataset": {
             "properties": {
   "suggest" : { "type" : "completion",
-                          "analyzer" : "simple",
-                          "search_analyzer" : "simple",
+                          "analyzer" : "english",
+                          "search_analyzer" : "english",
                           "payloads" : true
             },
                "FDPurl": {
                   "type": "string",
-        	  "analyzer": "whitespace"
+              "analyzer": "whitespace"
                },
                "catalogTitle": {
                   "type": "string",
@@ -19,11 +17,11 @@ put dataset
                },
                "catalogURL": {
                   "type": "string",
-  "analyzer": "whitespace"
+ 		   "analyzer": "whitespace"
                },
                "datasetURL": {
                   "type": "string",
-  "analyzer": "whitespace"
+ 		   "analyzer": "whitespace"
                },
                "description": {
                   "type": "string",
@@ -57,7 +55,7 @@ put dataset
                      },
                      "title": {
                         "type": "string",
-   "analyzer": "english"
+  			 "analyzer": "english"
                      }
                   }
                },

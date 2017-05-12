@@ -72,6 +72,7 @@
     
 
    <script>
+             
       var app =  angular
             .module('fair', ['elasticui', 'bootstrap3-typeahead'])
             .constant('euiHost', 'http://127.0.0.1:9200') // ACTION: change to cluster address
@@ -299,7 +300,10 @@
         <ul class="sidebar-nav" eui-aggregation="ejs.TermsAggregation('repositoryTitle.raw').field('repositoryTitle.raw').size(5)">
             <a id="menu-close" href="#" class="btn btn-light btn-lg pull-right toggle"><i class="fa fa-times"></i></a>
             <li class="sidebar-brand">
-                <a href="#top" onclick=$("#menu-close").click();>Filter</a>
+                <a href="#top" onclick=$("#menu-close").click();>Menu</a>
+            </li>
+            <li class="sidebar-brand">
+                <a href="#top" onclick=$("#menu-close").click();><a href="submit/">Submit FDP</a></a>
             </li>
             <!--li>
                 <a href="#top" onclick=$("#menu-close").click();>Home</a>
@@ -497,7 +501,7 @@
     <script>
         //alert('scope'+$scope);
     </script>
-    
+    <small?>V0.1</small?>
 </body>
 
 </html>
