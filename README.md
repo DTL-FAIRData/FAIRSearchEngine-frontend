@@ -24,7 +24,7 @@ MIT
 
 ## More Information
 
--
+- https://github.com/DTL-FAIRData/FAIRSearchEngine-frontend/wiki
 
 ## Bugs and Issues
 
