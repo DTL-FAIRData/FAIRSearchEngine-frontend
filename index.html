@@ -68,14 +68,14 @@
     
     <script src="ahead.js"></script>
     
-    
+    <script src="configuration.js"></script>
     
 
    <script>
              
       var app =  angular
             .module('fair', ['elasticui', 'bootstrap3-typeahead'])
-            .constant('euiHost', 'http://127.0.0.1:9200') // ACTION: change to cluster address
+            .constant('euiHost', esbaseurl) // ACTION: change to cluster address
             .controller('searchController', ['$scope', function ($scope, $euIndex) {
                 
                     $scope.querystring = "";
@@ -258,7 +258,7 @@
        
        
         client = new elasticsearch.Client({
-          host: 'localhost:9200',
+          host: esbaseurl,
           log: 'trace',
           //apiVersion: 'mine'
          } 
@@ -304,6 +304,12 @@
             </li>
             <li class="sidebar-brand">
                 <a href="#top" onclick=$("#menu-close").click();><a href="submit/">Submit FDP</a></a>
+            </li>
+			<li class="sidebar-brand">
+                <a href="#top" onclick=$("#menu-close").click();>Dev options</a>
+            </li>
+            <li class="sidebar-brand">
+                <a href="#top" onclick=$("#menu-close").click();><a href="#collapse" data-target=".collapse" data-toggle="collapse">Turn on/off readability metrics</a></a>
             </li>
             <!--li>
                 <a href="#top" onclick=$("#menu-close").click();>Home</a>
@@ -376,7 +382,7 @@
                     <div class="list-group">
                         <div ng-repeat="doc in indexVM.results.hits.hits" class="list-group-item" ng-mouseover="updateSearch(doc)" ng-mouseout="resetSearch()">
                             <!--{{doc._source | json | limitTo: 500}} OPTIONAL: display more meaningful data instead of json -->
-                            <h4 class="list-group-item-heading" ng-mouseover="countr = countr+1"><a href="{{doc._source.landingPage}}">{{doc._source.title}}</a></h4>
+                            <h4 class="list-group-item-heading" ng-mouseover="countr = countr+1"><a href="{{doc._source.landingPage}}">{{doc._source.title}}</a> <!--a href="#"  title="Hooray!" data-toggle="modal" data-target="#readabilityIndexModal"><i class="fa fa-font fa-fw" aria-hidden="true"></i></a--></h4>
                             <p class="list-group-item-text">{{doc._source.description | limitTo:400}}</p>
                             <div class="small top-buffer" style="margin-top: 10px;">
                                 <div class="btn-toolbar" role="toolbar">
@@ -385,7 +391,7 @@
                             </div>
 
                             <ol class="breadcrumb top-buffer" style="margin-top: 10px;">
-                                <li><a href="{{doc._source.FDPurl}}">{{doc._source.repositoryTitle}}</a></li>
+                                <li><a href="{{doc._source.FDPurl}}">{{doc._source.repositoryTitle}}</a> </li>
                                 <li><a href="{{doc._source.catalogURL}}">{{doc._source.catalogTitle}}</a></li>
                                 <li>Distribution <!--a href="" class="btn btn-primary btn-xs" href="{{distribution.accessURL}}{{distribution.download}}">xxx</a-->
                                   <div class="btn-group">
@@ -404,8 +410,45 @@
                                       <li><a href="{{distribution.distributionURL}}">{{distribution.distributionURL}}</a></li>
                                   </ul>
                                 </span-->
-                        </div>
-                    </div>
+						<!-- Modal -->
+						<div class="collapse readabilityCollapse" did="readabilityIndexCollapse" id="collapse">
+								<a href="http://en.wikipedia.org/wiki/Automated_Readability_Index">ARI:</a> {{doc._source.readabilityMetrics.ARI}}<br/>
+								<a href="http://en.wikipedia.org/wiki/Coleman-Liau_Index">ColemanLiau:</a> {{doc._source.readabilityMetrics.ColemanLiau}}<br/>
+								Complex: {{doc._source.readabilityMetrics.Complex}}<br/>
+								<a href="http://en.wikipedia.org/wiki/Flesch-Kincaid_Readability_Test">FleschKincaidGradeLevel:</a> {{doc._source.readabilityMetrics.FleschKincaidGradeLevel}}<br/>
+								<a href="http://en.wikipedia.org/wiki/Flesch-Kincaid_Readability_Test">FleschReadingEase:</a> {{doc._source.readabilityMetrics.FleschReadingEase}}<br/>
+								<a href="http://en.wikipedia.org/wiki/Gunning-Fog_Index">GunningFog:</a> {{doc._source.readabilityMetrics.GunningFog}}<br/>
+								<a href="http://en.wikipedia.org/wiki/SMOG">SMOG:</a> {{doc._source.readabilityMetrics.SMOG}}<br/>
+								<a href="http://en.wikipedia.org/wiki/SMOG_Index">SMOGIndex:</a> {{doc._source.readabilityMetrics.SMOGIndex}}<br/>
+						</div>
+						<!--/Modal -->
+						<!-- Modal -->
+						<div class="modal fade" id="readabilityIndexModal" tabindex="-1" role="dialog" aria-labelledby="readabilityIndexModal">
+						  <div class="modal-dialog" role="document">
+							<div class="modal-content">
+							  <div class="modal-header">
+								<button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+								<h4 class="modal-title" id="myModalLabel">Readability index</h4>
+							  </div>
+							  <div class="modal-body">
+								<a href="http://en.wikipedia.org/wiki/Automated_Readability_Index">ARI:</a> {{doc._source.readabilityMetrics.ARI}}<br/>
+								<a href="http://en.wikipedia.org/wiki/Coleman-Liau_Index">ColemanLiau:</a> {{doc._source.readabilityMetrics.ColemanLiau}}<br/>
+								Complex: {{doc._source.readabilityMetrics.Complex}}<br/>
+								<a href="http://en.wikipedia.org/wiki/Flesch-Kincaid_Readability_Test">FleschKincaidGradeLevel:</a> {{doc._source.readabilityMetrics.FleschKincaidGradeLevel}}<br/>
+								<a href="http://en.wikipedia.org/wiki/Flesch-Kincaid_Readability_Test">FleschReadingEase:</a> {{doc._source.readabilityMetrics.FleschReadingEase}}<br/>
+								<a href="http://en.wikipedia.org/wiki/Gunning-Fog_Index">GunningFog:</a> {{doc._source.readabilityMetrics.GunningFog}}<br/>
+								<a href="http://en.wikipedia.org/wiki/SMOG">SMOG:</a> {{doc._source.readabilityMetrics.SMOG}}<br/>
+								<a href="http://en.wikipedia.org/wiki/SMOG_Index">SMOGIndex:</a> {{doc._source.readabilityMetrics.SMOGIndex}}<br/>
+							  </div>
+							</div>
+						  </div>
+						</div>
+						<!--/Modal -->
+						
+						</div></div>
+				
+
+								
                     <eui-simple-paging></eui-simple-paging>
             </div>
             <div class="col-md-2" ng-mouseover="countr = countr+1" style="border: 0px solid red;" ng-show="currentSearch!=null">
