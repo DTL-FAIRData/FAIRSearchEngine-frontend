@@ -153,6 +153,10 @@
           'info', 'allele', 'clinical', 'british', 'database', 'disease',
           'fantom5', 'genotype', 'homozygous', 'human'
             ];
+		   
+		   var states2 = ['site:', 'fdp:', 'license:'];
+		   
+		   
            
             var substringMatcher = function(strs) {
               return function findMatches(q, cb) {
@@ -176,10 +180,73 @@
 
                 cb(matches);
               }};
+		   
+		     
+		   	 function findMatches2(q, strs){
+			    var matches, substringRegex;
+
+                // an array that will be populated with substring matches
+                matches = [];
+
+                // regex used to determine if a string contains the substring `q`
+                substrRegex = new RegExp(q, 'i');						
+
+                // iterate through the pool of strings and for any string that
+                // contains the substring `q`, add it to the `matches` array
+                $.each(strs, function(i, str) {
+                  if (substrRegex.test(str)) {
+                    matches.push(str);
+                  }
+                });
+				 
+				 return matches;
+				
+			 }
            
-           
+           	  //improve (missing one result)
               var substringMatcher2 = function(strs) {
-                  return function findMatches(q, cb, acb) {                 
+                  return function findMatches(q, cb, acb) {   
+					  
+					    if(q[q.length-1]==":"){
+						  		 var n = q.split(" ");
+							
+    							 if(n[n.length - 1]=="fdp:"){
+									 
+									 	res = client.search(
+											{
+										index: 'dataset',
+										body:  { "size": 0,
+												   "aggregations": {
+													  "fdp": {
+														 "terms": {
+															"field": "FDPurl"
+														 }
+													  }
+												   }
+												}
+											}
+											
+										).then( function (body) {
+										   //alert(JSON.stringify(body));
+										   var matches = Array();
+
+
+										   for(i = 0; i < body.aggregations.fdp.buckets.length; i++ ){
+											   console.log(body.aggregations.fdp.buckets[i].key);
+											   matches[i] = q + body.aggregations.fdp.buckets[i].key;
+										   }
+										  console.log("end to display");  
+
+										  acb(matches);
+
+										} );
+								 
+								 }
+					  
+					  		} else {//startif
+							
+							
+							
                      
                       //alert(cb);
                       //alert(acb);
@@ -213,13 +280,26 @@
                            //alert(JSON.stringify(body));
                            var matches = Array();
                           
+						   
+						  
                            for(i = 0; i < body.name_suggest[0].options.length; i++){
                                console.log(body.name_suggest[0].options.length + " " +body.name_suggest[0].options[i].text);
                                matches[i] = body.name_suggest[0].options[i].text;
                            }
-                          console.log("end to display");                         
-                          acb(matches);
+                          console.log("end to display");  
+						  
+					
+						  //alert(q.length);
+						
+								matchesPrefix = findMatches2(q, states2);
+								matches = matchesPrefix.concat(matches);
+								acb(matches);
+						  
+						  
+                    
                         } );
+								
+						}//endif
               }};     
 
            
@@ -242,7 +322,10 @@
                 {
                   name: 'states',
                   //source: substringMatcher2(states),
-                  source: substringMatcher2()
+                  source: substringMatcher2(),
+			     templates: {
+				header: '<h4 class="league-name">Keywords</h4>'
+  		   }
                   //source: bestPictures
            });
         });
