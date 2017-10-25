@@ -66,8 +66,7 @@
     <!-- only needed to instantiate client, if using angular remove -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/elasticsearch/12.1.3/elasticsearch.js"></script>
     
-    <script src="ahead.js"></script>
-    
+	<script src="ahead.js"></script>
     <script src="configuration.js"></script>
     
 
@@ -324,8 +323,16 @@
                   //source: substringMatcher2(states),
                   source: substringMatcher2(),
 			     templates: {
-				header: '<h4 class="league-name">Keywords</h4>'
-  		   }
+				 header: '<h4 class="league-name">Filter</h4>'
+  		       }},
+			   {
+                  name: 'states',
+                  //source: substringMatcher2(states),
+                  source: substringMatcher2(),
+			     templates: {
+				 header: '<h4 class="league-name">Keywords</h4>'
+  		       }
+  
                   //source: bestPictures
            });
         });
