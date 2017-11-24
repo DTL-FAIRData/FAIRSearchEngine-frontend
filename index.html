@@ -94,12 +94,6 @@
                         $scope.currentSearch = newCurrentSearchObj;
                     }
                     
-                    $scope.items = Array(3);
-                    $scope.items[0] = "aaa";
-                    $scope.items[1] = "bbb";
-                    $scope.items[2] = "ccc";
-                    $scope.items[3] = "ddd";
-                    
                     $scope.displayText = function(item) {
                         return item.sagsNo
                     }
@@ -109,16 +103,12 @@
 
                     
                      $scope.resultsView = function(){
-                          //alert('a');
                           console.log($scope.indexVM);                          
                      }
                      
                      $scope.resultsView2 = function(){
                          $scope.showResults = true;
-                         //alert($scope.querystring);
-                         console.log("aa");
                          console.log($scope);
-                         console.log("bb");
                          console.log($scope.indexVM);
                      }
                     
@@ -126,34 +116,38 @@
 
                     
             }]);
-//            .constant('euiHost', 'http://search-demo.fair-dtls.surf-hosted.nl:9200'); // ACTION: change to cluster address
        
-       //type ahead jquery (move to angular)
-       //jQuery(".mainsearch").tagsinput({
-    ///      typeahead: {
-       //     source: ["Amsterdam", "Washington", "Sydney", "Beijing", V"Cairo"]
-         // }
-        //});
-       
-      // var $input = $(".mainsearch");
-       
-       var numbers = new Bloodhound({
-          datumTokenizer: Bloodhound.tokenizers.whitespace,
-          queryTokenizer: Bloodhound.tokenizers.whitespace,
-          local:  ["(A)labama","Alaska","Arizona","Arkansas","Arkansas2","Barkansas"]
-       });
-
-        // initialize the bloodhound suggestion engine
-       numbers.initialize();
-       
+  
+		   (function($) {
+		$.fn.getCursorPosition = function() {
+			var input = this.get(0);
+			if (!input) return; // No (input) element found
+			if (document.selection) {
+				// IE
+			   input.focus();
+			}
+			return 'selectionStart' in input ? input.selectionStart:'' || Math.abs(document.selection.createRange().moveStart('character', -input.value.length));
+		 }
+	   })(jQuery);
+		   
+	   
        $(function() {
            
-           var states = ['dataset', 'bank', 'galliera', 'genetic', 'monarch',
-          'info', 'allele', 'clinical', 'british', 'database', 'disease',
-          'fantom5', 'genotype', 'homozygous', 'human'
-            ];
 		   
-		   var states2 = ['site:', 'fdp:', 'license:'];
+		   $('#mainsearc').on('input',function(e){
+			    cursorPosition = $('#mainsearc').getCursorPosition();
+			    searchString = $('#mainsearc').val().substring(0, cursorPosition);
+			    searchString = searchString + "{{CURS}}" +   $('#mainsearc').val().substring(cursorPosition);
+			    lexicalAnalysis(searchString);
+	   	   });
+		   
+		   var facade = {
+			   	'fdp:':{'tag':'FDPurl', 'hint':'repositoryTitle.raw'},
+			    'license:':{'tag':'distribution.licenseURI', 'hint':'distribution.licenseAcronym'},
+			    'site:':{'tag':'FDPurl', 'hint':'repositoryTitle.raw'}
+		   };
+		   
+
 		   
 		   
            
@@ -182,18 +176,21 @@
 		   
 		     
 		   	 function findMatches2(q, strs){
+				 
 			    var matches, substringRegex;
 
                 // an array that will be populated with substring matches
                 matches = [];
 
                 // regex used to determine if a string contains the substring `q`
-                substrRegex = new RegExp(q, 'i');						
-
+                substrRegex = new RegExp(q, 'i');
+				substrRegexPrefix = new RegExp("fdp:"+q, 'i')
+				//alert(q + " " + strs);
                 // iterate through the pool of strings and for any string that
                 // contains the substring `q`, add it to the `matches` array
                 $.each(strs, function(i, str) {
-                  if (substrRegex.test(str)) {
+                  if (substrRegex.test(str) || substrRegexPrefix.test(str)) {
+					  //alert("push"+str);
                     matches.push(str);
                   }
                 });
@@ -201,74 +198,104 @@
 				 return matches;
 				
 			 }
+		   
+		      function containsPrefix(o, prefix){
+						for( var k in o ) {
+							if(k==prefix) return true;
+						}
+				  		return false;
+			  }
+		   
+		   	  function getField(o, prefix){
+				  for( var k in o ) {
+					  		//alert(k);
+					  		if(k==prefix)
+								return o[k];
+						}
+				  return false;
+			  }
+		   
+		     
            
            	  //improve (missing one result)
               var substringMatcher2 = function(strs) {
                   return function findMatches(q, cb, acb) {   
-					  
 					    if(q[q.length-1]==":"){
 						  		 var n = q.split(" ");
 							
-    							 if(n[n.length - 1]=="fdp:"){
+    							 if(containsPrefix(facade, n[n.length - 1])){
+									 	field = getField(facade, n[n.length - 1]);
 									 
-									 	res = client.search(
-											{
-										index: 'dataset',
-										body:  { "size": 0,
-												   "aggregations": {
-													  "fdp": {
+									
+									 	if(field.hasOwnProperty('tag')){
+											searchField = field.tag;	
+										} else {
+											searchField = field;
+										}
+									 
+									  	if(field.hasOwnProperty('hint')){
+											searchHint = field.hint;
+										    
+											query = { "size": 0,
+											     "aggregations": {
+												    "fdp": {
+												  	 "terms": {
+												  		"field": searchField
+												  	 },
+													 "aggregations": {
+														"fdp2": {
 														 "terms": {
-															"field": "FDPurl"
+															"field": searchHint
 														 }
-													  }
-												   }
-												}
-											}
-											
-										).then( function (body) {
-										   //alert(JSON.stringify(body));
+														}
+													 }
+												  }
+											   }
+											};
+									
+										} else {
+											   query = { "size": 0,
+											   "aggregations": {
+												  "fdp": {
+													 "terms": {
+														"field": searchField
+													 }
+												  }
+											   }
+											};
+								
+									 
+										}
+		
+									 
+									    console.log(field);
+									 	console.log(query);
+									 
+									 	res = client.search({
+											index: 'dataset',
+											body: query
+										}).then( function (body){
+	//									   
+	//									   //alert("json"+JSON.stringify(body));
 										   var matches = Array();
-
-
+																			
 										   for(i = 0; i < body.aggregations.fdp.buckets.length; i++ ){
 											   console.log(body.aggregations.fdp.buckets[i].key);
-											   matches[i] = q + body.aggregations.fdp.buckets[i].key;
+											   matches.push( {'value':q + body.aggregations.fdp.buckets[i].key,                  'hint':body.aggregations.fdp.buckets[i].fdp2.buckets[0].key} ) ;
+											   //alert(body.aggregations.fdp.buckets[i].fdp2.buckets[0].key);
+											   //alert(body.aggregations.fdp.buckets[i].key);
 										   }
-										  console.log("end to display");  
-
-										  acb(matches);
-
-										} );
-								 
+										
+										   console.log("end to display");  
+										   //alert(matches);
+										   //matches = ["fdp:a", "fdp:b"];
+										   //matches.push("z"); matches.push("y");
+										   //alert(acb);
+										   acb(matches);
+									   });
 								 }
-					  
 					  		} else {//startif
 							
-							
-							
-                     
-                      //alert(cb);
-                      //alert(acb);
-                      
-                      
-                     //res = client.suggest({
-                     //    index: 'dataset',
-                     //    body: ejs.CompletionSuggester('name_suggest')
-                     //              .text(q)
-                     //              .field('suggest')
-                     //   }, function (error, response, cb) {
-                     //       console.log(error);
-                     //       console.log("about to display");
-                     //      console.log(response);
-                     //           for(i = 0; i < response.name_suggest.length; i++){
-                     //             // alert(response.name_suggest[0].options[i].text);
-                     //               console.log("fff"+response.name_suggest[0].options[i].text);
-                     //               matches[i] = response.name_suggest[0].options[i].text;
-                     //               cb(matches);
-                     //          }
-                     //    }); 
-                      
-                      //elasticsearch.Client.apis.mine = { giveSuggestion:cb };
                       
                       res = client.suggest({
                         index: 'dataset',
@@ -290,7 +317,7 @@
 					
 						  //alert(q.length);
 						
-								matchesPrefix = findMatches2(q, states2);
+								matchesPrefix = findMatches2(q, facade);
 								matches = matchesPrefix.concat(matches);
 								acb(matches);
 						  
@@ -299,19 +326,7 @@
                         } );
 								
 						}//endif
-              }};     
-
-           
-           
-           var bestPictures = new Bloodhound({
-              datumTokenizer: Bloodhound.tokenizers.obj.whitespace('value'),
-              queryTokenizer: Bloodhound.tokenizers.whitespace,
-              //prefetch: '../data/films/post_1960.json',
-              remote: {
-                url: '../data/films/queries/%QUERY.json',
-                wildcard: '%QUERY'
-              }
-            });
+              }};    
 
            $('#mainsearc').typeahead({
                   hint: true,
@@ -319,44 +334,155 @@
                   minLength: 1
                 },
                 {
-                  name: 'states',
+                  //name: 'states',
                   //source: substringMatcher2(states),
-                  source: substringMatcher2(),
-			     templates: {
-				 header: '<h4 class="league-name">Filter</h4>'
-  		       }},
-			   {
-                  name: 'states',
-                  //source: substringMatcher2(states),
-                  source: substringMatcher2(),
-			     templates: {
-				 header: '<h4 class="league-name">Keywords</h4>'
-  		       }
-  
-                  //source: bestPictures
-           });
-        });
-       
-       
+                 source: substringMatcher2(),
+			     //updater: function(suggestion) {return suggestion.value();},
+			     displayKey: 'value',
+			   	 templates: {
+				      header: '<h4 class="league-name">Filter</h4>',
+					  suggestion: function(data){
+						  if(data.hasOwnProperty('hint')){
+							  return '<div>'+data.value+' <span class="badge">'+data.hint+'</span></div>';
+						  } else 
+						  	  return '<div>'+data.value+'</div>';
+					  }
+  		         }
+                }).bind('typeahead:select', function(ev, suggestion){
+           				//capture and add to model
+			   			//alert("ev"+ev+" "+suggestion);
+			   			searchModel = SearchModel.getInstance();
+			   			searchModel.addTag(suggestion.value);
+		   		});
+		   
+		   		var SearchModel = (function () {
+				  // Instance stores a reference to the Singleton
+				  var instance;
+					
+				  function init() {
+					// Singleton
+					// Private methods and variables
+					function privateTestMethod(){
+						console.log( "I am private" );
+					}
 
-       //console.log( ejs.MatchQuery('_all', 'test').toJSON() );
-       //ejs.CompletionSuggester('test').toJSON() 
-        //var client = new elasticsearch.Client({
-        //  host: 'localhost:9200',
-        //  log: 'trace'
-        //});
+					function drawTags(){
+						tagHtml =  "";
+						for(i=0; i<model.length; i++){
+							console.log(model);
+							//alert(model[i]);
+							tagHtml += "<span class='badge'>"+model[i];
+							tagHtml += "<a href='javascript:SearchModel.getInstance().removeTag(\""+btoa(model[i])+"\")'>";
+							tagHtml += "<span class='glyphicon glyphicon-remove-circle' aria-hidden='true'/></a></span>";
+						}   
+						$("#tagInput").html(tagHtml);
+					}
+					  
+					var model = [];  
+					  
+					return {
+					  addTag: function(tag){
+						model.push(tag)  
+						drawTags();
+					  },
+					  removeTag: function(tag){
+						alert('');
+						var index = model.indexOf(atob(tag));
+						tag.splice(index, 1);
+						drawTags();
+					  }
+					};
+				  };
+				  return {
+					// Get the Singleton instance if one exists
+					// or create one if it doesn't
+					getInstance: function () {
+					  if ( !instance ) {
+						instance = init();
+					  }
+					  return instance;
+					}
+				  };
+				})();
+		   
+		   
+		function removeTag(tag){
+			SearchModel.getInstance().removeTag(tag);
+		}
+		   
+		function lexicalAnalysis(value){
+			 lex = str => str.split(' ').map(s => s.trim()).filter(s => s.length);
+			 return lex;
+		}
+		   
+		//const Op = Symbol('term');
+		//const Num = Symbol('num');
+		const Term = Symbol('term');
+		const TermCur = Symbol('termcursor');
+		const PrefTerm = Symbol('prefixedterm');
+		const PrefTermCur = Symbol('prefixedtermcur');
+		   
+		const parse = tokens => {
+
+		  let c = 0;
+
+		  const peek = () => tokens[c];
+		  const consume = () => tokens[c++];
+
+		  const parseNum = () => ({ val: parseInt(consume()), type: Num });
+
+		  const parseOp = () => {
+			const node = { val: consume(), type: Op, expr: [] };
+			while (peek()) node.expr.push(parseExpr());
+			return node;
+		  };
+			
+		  const parseTerm = () => {
+			 const node = { val: consume(), type: Term };
+			 return node;
+		  };
+			
+		  const parsePrefTerm = () => {
+			  const node = { val: consume(), type: PrefTerm };
+			  return node;
+		  }
+		  
+		  const parsePrefTermCurs = () => {
+			  const node = { val: consume(), type: PrefTermCur};
+			  return node;
+		  }
+		  
+		  
+		  const parseTermCurs = () => {
+			  const node = { val: consume(), type: TermCur};
+			  return node;
+		  }
+
+		  const parseExpr = () => { // /\d/.test(peek()) ? parseNum() : parseOp();
+		  		if(peek().startsWith("fdp:") && peek().includes("{{curs}}")) parsePrefTermCur(); else
+				if(peek().startsWith("fdp:")) parsePrefTerm();
+				if(peek().includes("{{curs}}")) parseTerm(); else parseTerm();
+				
+		  }
+
+		  return parseExpr();
+		};
+		   
+		const transpile = ast => {
+		  const opMap = { sum: '+', mul: '*', sub: '-', div: '/' };
+		  const transpileNode = ast => ast.type === Num ? transpileNum(ast) : transpileOp(ast);
+		  const transpileNum = ast => ast.val;
+		  const transpileOp = ast => `(${ast.expr.map(transpileNode).join(' ' + opMap[ast.val] + ' ')})`;
+		  return transpileNode(ast);
+		};
+
+		client = new elasticsearch.Client({
+		  host: esbaseurl,
+		  log: 'trace',
+		  //apiVersion: 'mine'
+		 });
        
-       
-        client = new elasticsearch.Client({
-          host: esbaseurl,
-          log: 'trace',
-          //apiVersion: 'mine'
-         } 
-        );
-       
-       
-       
-       client.suggest({
+        client.suggest({
           index: 'dataset',
           body: ejs.CompletionSuggester('name_suggest')
                   .text('x')
@@ -376,7 +502,11 @@
            //console.log(error);
            //console.log(response);
         });
-       
+		   
+		   
+	   });
+		
+
        //console.log( ejs.CompletionSuggester('test').toJSON() );
        
     </script>
@@ -448,6 +578,10 @@
                     <div class="row" style="border: 0px solid red; padding-top: 15px">
                         <input class="form-control input-lg a_typeahead" a_bs3-typeahead autocomplete="off" type="text" eui-query="ejs.MatchQuery('_all', querystring)" ng-model="querystring" eui-enabled="querystring.length" id="mainsearc"  ng-change="resultsView2()" /> {{querystring}}
                     </div>
+					<div class="row">
+                          <div class="col-md-12" id="tagInput" style="padding-top:10px; padding-bottom:10px;">
+                          </div>
+                    </div>
                     <div class="row">
                           <div class="col-md-2">
                             <eui-checklist field="'_source.repositoryTitle'" size="10"></eui-checklist>
@@ -476,7 +610,7 @@
                             <p class="list-group-item-text">{{doc._source.description | limitTo:400}}</p>
                             <div class="small top-buffer" style="margin-top: 10px;">
                                 <div class="btn-toolbar" role="toolbar">
-                                    <a  ng-repeat="distribution in doc._source.distribution" class="btn btn-primary btn-xs" href="{{distribution.accessURL}}{{distribution.download}}">{{distribution.title}}  ({{distribution.downloadHumanReadableSize}} / <span class="label label-default">{{distribution.licenseAcronym}}</span>)</a>
+                                    <a  ng-repeat="distribution in doc._source.distribution" class="btn btn-primary btn-xs" href="{{distribution.accessURL}}{{distribution.download}}">{{distribution.title}}  ({{distribution.format}} / {{distribution.downloadHumanReadableSize}} / <span class="label label-default">{{distribution.licenseAcronym}}</span>)</a>
                                 </div>
                             </div>
 
@@ -490,7 +624,7 @@
                                   </button>
                                       <ul class="dropdown-menu">
                                         <!--li ng-repeat="distribution in doc._source.distribution"><a href="{{distribution.distributionURL}}">{{distribution.distributionURL}}</a></li-->
-                                        <li ng-repeat="distribution in doc._source.distribution"><a href="{{distribution.distributionURL}}">{{distribution.title}}</a></li>
+                                        <li ng-repeat="distribution in doc._source.distribution"><a href="{{distribution.distributionURI}}">{{distribution.title}} <b>({{distribution.format}})</b></a></li>
                                       </ul>
                                    </div>
                                 </li>
@@ -542,7 +676,7 @@
                     <eui-simple-paging></eui-simple-paging>
             </div>
             <div class="col-md-2" ng-mouseover="countr = countr+1" style="border: 0px solid red;" ng-show="currentSearch!=null">
-            <img src="https://api.thumbalizr.com/?url={{currentSearch._source.landingPage}}&width=250">
+            <img src="http://www.robothumb.com/src/http://{{currentSearch._source.landingPage}}@160x120">
             <br/>
             <h3>{{currentSearch._source.catalogTitle}}</h3>
                 <div ng-repeat="taxonomyURI in currentSearch._source.taxonomyList">{{taxonomyURI}}</div>
