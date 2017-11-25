@@ -374,6 +374,13 @@
 							tagHtml += "<span class='badge'>"+model[i];
 							tagHtml += "<a href='javascript:SearchModel.getInstance().removeTag(\""+btoa(model[i])+"\")'>";
 							tagHtml += "<span class='glyphicon glyphicon-remove-circle' aria-hidden='true'/></a></span>";
+							
+							str = $('#mainsearc').val();
+							alert(str + " " + model[i]);
+							str2 = str.replace(model[i], "")
+							alert(str2);
+							$('#mainsearc').val(str2);
+							//$('#mainsearc').val( str.replace(model[i], "") );
 						}   
 						$("#tagInput").html(tagHtml);
 					}
@@ -679,7 +686,7 @@
             <img src="http://www.robothumb.com/src/http://{{currentSearch._source.landingPage}}@160x120">
             <br/>
             <h3>{{currentSearch._source.catalogTitle}}</h3>
-                <div ng-repeat="taxonomyURI in currentSearch._source.taxonomyList">{{taxonomyURI}}</div>
+                <div ng-repeat="taxonomyURI in currentSearch._source.taxonomyList"><span class="badge">{{taxonomyURI}}</span></div>
             </div> 
 	    </div>
     <!--/header-->
