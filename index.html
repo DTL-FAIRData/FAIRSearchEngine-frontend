@@ -275,8 +275,6 @@
 											index: 'dataset',
 											body: query
 										}).then( function (body){
-	//									   
-	//									   //alert("json"+JSON.stringify(body));
 										   var matches = Array();
 																			
 										   for(i = 0; i < body.aggregations.fdp.buckets.length; i++ ){
@@ -290,7 +288,7 @@
 										   //alert(matches);
 										   //matches = ["fdp:a", "fdp:b"];
 										   //matches.push("z"); matches.push("y");
-										   //alert(acb);
+										   //alert(matches[0].value);
 										   acb(matches);
 									   });
 								 }
@@ -304,45 +302,49 @@
                                   .field('suggest')
                         }).then( function (body) {
                            //alert(JSON.stringify(body));
-                           var matches = Array();
-                          
-						   
+						   var matches = Array();
+						   console.log("------");
+						   console.log(q);
+						   console.log(body);
 						  
                            for(i = 0; i < body.name_suggest[0].options.length; i++){
                                console.log(body.name_suggest[0].options.length + " " +body.name_suggest[0].options[i].text);
                                matches[i] = body.name_suggest[0].options[i].text;
                            }
-                          console.log("end to display");  
-						  
-					
-						  //alert(q.length);
-						
-								matchesPrefix = findMatches2(q, facade);
-								matches = matchesPrefix.concat(matches);
-								acb(matches);
-						  
-						  
-                    
-                        } );
+                           console.log("end to display");
+						   //alert(q + " - " + facade);
+
+						   //matchesPrefix = findMatches2(q, facade);
+						   //matches = matchesPrefix.concat(matches);
+						   //alert(cb + " " + matches);
+						   //matches.map( s => { value : s } );
+						   matchesToReturn = [];
+						   for(i=0; i < matches.length; i++){
+							   matchesToReturn.push( { 'value': matches[i] } );   
+						   }
+						 
+						   acb(matchesToReturn);
+						} );
 								
 						}//endif
               }};    
 
-           $('#mainsearc').typeahead({
+           //$('#mainsearc').typeahead({
+		   $('#searchInput').typeahead({
                   hint: true,
                   highlight: true,
                   minLength: 1
                 },
                 {
-                  //name: 'states',
-                  //source: substringMatcher2(states),
                  source: substringMatcher2(),
 			     //updater: function(suggestion) {return suggestion.value();},
 			     displayKey: 'value',
 			   	 templates: {
 				      header: '<h4 class="league-name">Filter</h4>',
 					  suggestion: function(data){
-						  if(data.hasOwnProperty('hint')){
+						  //if(typeof data === 'string'){
+						  //	  return "<div>"+data+"</div>"; } else {
+						   if(data.hasOwnProperty('hint')){
 							  return '<div>'+data.value+' <span class="badge">'+data.hint+'</span></div>';
 						  } else 
 						  	  return '<div>'+data.value+'</div>';
@@ -351,8 +353,10 @@
                 }).bind('typeahead:select', function(ev, suggestion){
            				//capture and add to model
 			   			//alert("ev"+ev+" "+suggestion);
-			   			searchModel = SearchModel.getInstance();
-			   			searchModel.addTag(suggestion.value);
+			   			if(suggestion.value.indexOf(":") !== -1){			   	
+			   				searchModel = SearchModel.getInstance();
+			   				searchModel.addTag(suggestion.value);
+						}
 		   		});
 		   
 		   		var SearchModel = (function () {
@@ -362,40 +366,53 @@
 				  function init() {
 					// Singleton
 					// Private methods and variables
-					function privateTestMethod(){
-						console.log( "I am private" );
-					}
+		
 
 					function drawTags(){
 						tagHtml =  "";
+						searchInput = "";
 						for(i=0; i<model.length; i++){
+							
 							console.log(model);
 							//alert(model[i]);
 							tagHtml += "<span class='badge'>"+model[i];
-							tagHtml += "<a href='javascript:SearchModel.getInstance().removeTag(\""+btoa(model[i])+"\")'>";
+							//tagHtml += "<a href='javascript:SearchModel.getInstance().removeTag(\""+btoa(model[i])+"\")'>";
+							tagHtml += "<a class='tagremoval' cid='"+btoa(model[i])+"' href='#'> ";
 							tagHtml += "<span class='glyphicon glyphicon-remove-circle' aria-hidden='true'/></a></span>";
 							
-							str = $('#mainsearc').val();
-							alert(str + " " + model[i]);
-							str2 = str.replace(model[i], "")
-							alert(str2);
-							$('#mainsearc').val(str2);
-							//$('#mainsearc').val( str.replace(model[i], "") );
-						}   
+							str = $('#searchInput').val();
+							str2 = str.replace(model[i], "");
+						
+							//workaround
+							setTimeout(function(){ $('#searchInput').val(str2); }, 300);
+							searchInput = searchInput + " " + model[i];
+						}
+						
+						searchInput += " " + otherLexic.join(" ");
+						
+						$("#mainsearc").val(searchInput);
+						$("#mainsearc").change();
 						$("#tagInput").html(tagHtml);
 					}
 					  
-					var model = [];  
+					var model = []; 
+					var otherLexic = [];
 					  
 					return {
+					  test2: function(){ alert(); },	
+					   
 					  addTag: function(tag){
 						model.push(tag)  
 						drawTags();
 					  },
 					  removeTag: function(tag){
-						alert('');
 						var index = model.indexOf(atob(tag));
-						tag.splice(index, 1);
+						model.splice(index, 1);
+						drawTags();
+					  },
+					  setLexic: function(lexic){
+						console.log(lexic);
+						otherLexic = lexic;
 						drawTags();
 					  }
 					};
@@ -412,13 +429,22 @@
 				  };
 				})();
 		   
+		
+		
+	    $("body").on('click','a.tagremoval',function(){
+			cid = $(this).attr("cid");
+			SearchModel.getInstance().removeTag(cid);
+		});
 		   
-		function removeTag(tag){
-			SearchModel.getInstance().removeTag(tag);
-		}
+		$("#searchInput").on('input', function() {
+  			lexic = lexicalAnalysis($("#searchInput").val());
+			simpleLexic = lexic.filter( s => s.indexOf(":") !== -1 ? false : true );
+			SearchModel.getInstance().setLexic( simpleLexic );
+		});
+		
 		   
-		function lexicalAnalysis(value){
-			 lex = str => str.split(' ').map(s => s.trim()).filter(s => s.length);
+		function lexicalAnalysis(str){
+			 lex = str.split(' ').map(s => s.trim()).filter(s => s.length);
 			 return lex;
 		}
 		   
@@ -464,7 +490,8 @@
 			  const node = { val: consume(), type: TermCur};
 			  return node;
 		  }
-
+		  
+		  //improve by separating the operator from the term
 		  const parseExpr = () => { // /\d/.test(peek()) ? parseNum() : parseOp();
 		  		if(peek().startsWith("fdp:") && peek().includes("{{curs}}")) parsePrefTermCur(); else
 				if(peek().startsWith("fdp:")) parsePrefTerm();
@@ -474,6 +501,12 @@
 
 		  return parseExpr();
 		};
+		   
+	    const interpret = ast => {
+			const interpreteNode = ast => ast.value.startsWith("fdp:") ? interpretPrefix(ast) : interpretFreeText();
+			const interpretPrefix = ast => alert();
+			return interpretNode(ast)
+		}
 		   
 		const transpile = ast => {
 		  const opMap = { sum: '+', mul: '*', sub: '-', div: '/' };
@@ -583,7 +616,8 @@
                 </div>
                 <div class="form-group col-md-6" style="border: black 0px solid">
                     <div class="row" style="border: 0px solid red; padding-top: 15px">
-                        <input class="form-control input-lg a_typeahead" a_bs3-typeahead autocomplete="off" type="text" eui-query="ejs.MatchQuery('_all', querystring)" ng-model="querystring" eui-enabled="querystring.length" id="mainsearc"  ng-change="resultsView2()" /> {{querystring}}
+						<input class="form-control input-lg a_typeahead" id="searchInput" type="text" a_bs3-typeahead autocomplete="off">
+                        <input class="form-control input-lg a_typeahead"  type="hidden" eui-query="ejs.MatchQuery('_all', querystring)" ng-model="querystring" eui-enabled="querystring.length" id="mainsearc"  ng-change="resultsView2()" /> {{querystring}}
                     </div>
 					<div class="row">
                           <div class="col-md-12" id="tagInput" style="padding-top:10px; padding-bottom:10px;">
@@ -775,7 +809,7 @@
     <script>
         //alert('scope'+$scope);
     </script>
-    <small?>V0.1</small?>
+    <small?>V0.12</small?>
 </body>
 
 </html>
