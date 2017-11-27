@@ -508,13 +508,6 @@
 			return interpretNode(ast)
 		}
 		   
-		const transpile = ast => {
-		  const opMap = { sum: '+', mul: '*', sub: '-', div: '/' };
-		  const transpileNode = ast => ast.type === Num ? transpileNum(ast) : transpileOp(ast);
-		  const transpileNum = ast => ast.val;
-		  const transpileOp = ast => `(${ast.expr.map(transpileNode).join(' ' + opMap[ast.val] + ' ')})`;
-		  return transpileNode(ast);
-		};
 
 		client = new elasticsearch.Client({
 		  host: esbaseurl,
@@ -617,7 +610,7 @@
                 <div class="form-group col-md-6" style="border: black 0px solid">
                     <div class="row" style="border: 0px solid red; padding-top: 15px">
 						<input class="form-control input-lg a_typeahead" id="searchInput" type="text" a_bs3-typeahead autocomplete="off">
-                        <input class="form-control input-lg a_typeahead"  type="hidden" eui-query="ejs.MatchQuery('_all', querystring)" ng-model="querystring" eui-enabled="querystring.length" id="mainsearc"  ng-change="resultsView2()" /> {{querystring}}
+                        <input class="form-control input-lg a_typeahead"  type="text" style="width:1px; height:1px;" eui-query="ejs.MatchQuery('_all', querystring)" ng-model="querystring" eui-enabled="querystring.length" id="mainsearc"  ng-change="resultsView2()" /> {{querystring}}
                     </div>
 					<div class="row">
                           <div class="col-md-12" id="tagInput" style="padding-top:10px; padding-bottom:10px;">
